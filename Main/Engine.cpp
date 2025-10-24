@@ -83,12 +83,13 @@ void Engine::init(GLFWwindow*& window)
 	glfwSwapInterval(0);
 	// set callbacks, input mode and enable depth
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSetFramebufferSizeCallback(m_window, Engine::frameBufferSizeCallback);
 	glfwSetScrollCallback         (m_window, Engine::scrollCallback);
 	glfwSetCursorPosCallback      (m_window, Engine::mouseCallback);
 	glfwSetKeyCallback            (m_window, Engine::keyCallback);
 	glfwSetInputMode              (m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
 
 	imguiInit();
 
@@ -99,22 +100,25 @@ void Engine::init(GLFWwindow*& window)
 	createMeshes();
 	createMaterials();
 
-	for (int i = 1; i < IM_ARRAYSIZE(cubePositions); i++)
+	createGrid();
+
+
+	loadModel("c:/users/pc/desktop/c++/glscene/models/Project1.obj", "House", Vec3f(0.0f, 1.0f, 7.0f), Vec3f(0.1f));
+	loadModel("c:/users/pc/desktop/c++/glscene/models/Chest_LowPoly.obj", "Chest");
+
+	for (int i = 1; i <= 10; ++i)
 	{
-		createCube("Cube", "container",
+		createCube("cube", "container",
 			cubePositions[i], 20.0f * i,
 			cubePositions[i].getNormalized(),
 			Vec3f(2.0f));
 	}
 
-	for (int j = 0; j < 4; j++)
-	{
-		createPointLight(Vec3f(pointLightPositions[j].x,pointLightPositions[j].y, pointLightPositions[j].z), j);
-	}
+	
 
 
-	//createFloor();
-//	createDirectionalLight();
+	createFloor();
+	createDirectionalLight();
 
 	// TODO: change scene creation
 
@@ -129,6 +133,8 @@ void Engine::sRendering()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	 // Clear color and depth buffers
 
 
+	renderGrid();
+
 	for (auto e : m_entityManager.entities)
 	{
 		if (e.hasComponent<MeshRenderer>() && e.hasComponent<Transform>())
@@ -136,14 +142,13 @@ void Engine::sRendering()
 			auto& cTransform = e.getComponent<Transform>();
 			auto& cRenderer = e.getComponent<MeshRenderer>();
 
-			glm::mat4 worldMat = glm::mat4{1.0f};
-			worldMat = glm::translate(worldMat, static_cast<glm::vec3>(cTransform.getPosition()));
-			worldMat = glm::rotate(worldMat, glm::radians(cTransform.getRotationAngle()), static_cast<glm::vec3>(cTransform.getRotationAxis()));
-			worldMat = glm::scale(worldMat, static_cast<glm::vec3>(cTransform.getScale()));
-			cRenderer.m_material->use(camera.getProjectionMatrix(), camera.getViewMatrix(), worldMat, camera.getPosition());
-			cRenderer.m_mesh->draw();
+			cRenderer.render(camera, cTransform);
 		}
 	}
+
+
+	
+
 
 }
 
@@ -249,9 +254,8 @@ void Engine::imguiUse()
 			static float entityRotationAxis[3]{};
 			static float entityRotationAngle{};
 			ImGui::Combo("Entities", &entityIndex, entityNames.data(), static_cast<int>(entityNames.size()));
-			if (entityIndex >= 0)
+			if (entityIndex >= 0 && !m_entityManager.entities.empty())
 			{
-
 				auto& currentEntity = m_entityManager.entities[entityIndex];
 				auto& entityTransform = currentEntity.getComponent<Transform>();
 				for (int index = 0; index <= 2; ++index)
@@ -270,7 +274,37 @@ void Engine::imguiUse()
 				entityTransform.rotate(entityRotationAngle, Vec3f(entityRotationAxis[0], entityRotationAxis[1], entityRotationAxis[2]));
 				entityTransform.setPosition(Vec3f(entityPosition[0], entityPosition[1], entityPosition[2]));
 				entityTransform.setScale(Vec3f(entityScale[0], entityScale[1], entityScale[2]));
+
+				if (currentEntity.hasComponent<PointLight>())
+				{
+					static float pConstant{};
+					static float pLinear{};
+					static float pQuadratic{};
+					static float pointColor[3];
+					auto& point = currentEntity.getComponent<PointLight>();
+
+					for (int i = 0; i < 3; ++i)
+					{
+						pointColor[i] = point.m_color[i];
+					}
+
+					pConstant = point.m_constant;
+					pLinear = point.m_linear;
+					pQuadratic = point.m_quadratic;
+
+					ImGui::DragFloat("Constant", &pConstant);
+					ImGui::DragFloat("Linear", &pLinear);
+					ImGui::DragFloat("Quadratic", &pQuadratic);
+					ImGui::ColorEdit3("Light Color", pointColor);
+
+					point.m_constant = pConstant;
+					point.m_linear = pLinear;
+					point.m_quadratic = pQuadratic;
+
+					point.m_color = Vec3f(pointColor[0], pointColor[1], pointColor[2]);
+				}
 			}
+
 
 			ImGui::EndTabItem();
 		}
@@ -317,9 +351,12 @@ void Engine::imguiUse()
 		ImGui::EndTabBar();
 
 	}
-	std::stringstream frameRateText{};
-	frameRateText << "Delta Time: " << 1000/(1/m_deltaTime) << " ms/s";
-	ImGui::Text(frameRateText.str().c_str());
+	std::string deltaTimeText{};
+	std::string frameRateText{};
+	deltaTimeText = "Delta Time: " + std::to_string(static_cast<int>(std::floor(1000 / (1 / m_deltaTime)))) + " ms/s";
+	frameRateText = "FPS: " + std::to_string(static_cast<int>(std::floor(1 / m_deltaTime)));
+	ImGui::Text(deltaTimeText.c_str());
+	ImGui::Text(frameRateText.c_str());
 
 	// Entity Tab
 
@@ -333,46 +370,71 @@ void Engine::imguiRender()
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void Engine::renderGrid()
+{
+	shaders["grid"]->use();
+	shaders["grid"]->setUniformMat4("projection", (camera.getProjectionMatrix()));
+	shaders["grid"]->setUniformMat4("view", camera.getViewMatrix());
+	shaders["grid"]->setUniformVec3("viewPos", camera.getPosition());
+	glBindVertexArray(gridVao);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+}
+
 
 void Engine::createTextures()
 {
-	textures["default"] = std::make_shared<Texture>("Textures/empty.jpg", GL_REPEAT, GL_RGB);
-	textures["aphex"] = std::make_shared<Texture>("Textures/aphex.gif", GL_REPEAT, GL_RGB);
-	textures["floor"] = std::make_shared<Texture>("Textures/woodenFloor.jpg", GL_REPEAT,	GL_RGB);
+	textures["default"] = std::make_shared<Texture>("Textures/empty.jpg");
+	textures["aphex"] = std::make_shared<Texture>("Textures/aphex.gif");
+	textures["floor"] = std::make_shared<Texture>("Textures/woodenFloor.jpg");
 
-	textures["container"] = std::make_shared<Texture>("Textures/container_diffuse.png", "Textures/container_specular.png", GL_REPEAT, GL_RGBA, GL_RGBA);
-	textures["container"]->setEmissiveMap("Textures/matrix.jpg", GL_RGB);
+	textures["container"] = std::make_shared<Texture>("Textures/container_diffuse.png");
+	textures["container_specular"] = std::make_shared<Texture>("Textures/container_specular.png",Texture::Specular);
 }
 
 
 void Engine::createShaders()
 {
-	shaders["default"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/default.frag");
+	shaders["default"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/lightAffected.frag");
 	shaders["textured"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/textured.frag");
+	shaders["simpleTex"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/simpleTex.frag");
 	shaders["plain"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/plain.frag");
 	shaders["lightAffected"] = std::make_shared<Shader>("Shaders/default.vert", "Shaders/lightAffected.frag");
+	shaders["grid"] = std::make_shared<Shader>("Shaders/world_grid.vert", "Shaders/world_grid.frag");
 }
 
 void Engine::createMeshes()
 {
-	meshes["cube"] = std::make_shared<Mesh>(Cube::vertices, Cube::indices, 36, sizeof(Cube::vertices), sizeof(Cube::indices));
-	meshes["plane"] = std::make_shared<Mesh>(Floor::vertices, Floor::indices, 6, sizeof(Floor::vertices), sizeof(Floor::indices));
+	meshes["cube"] = std::make_shared<Mesh>(Cube::vertices, Cube::indices);
+	meshes["cube"]->tag = "cube";
+	meshes["plane"] = std::make_shared<Mesh>(Floor::vertices, Floor::indices);
+	meshes["plane"]->tag = "plane";
 }
 
 void Engine::createMaterials()
 {
-	materials["lit"] = std::make_shared<Material>(shaders["default"]);
+	materials["default"] = std::make_shared<Material>(shaders["default"]);
+	materials["lit"] = std::make_shared<Material>(shaders["textured"]);
 	materials["unlit"] = std::make_shared<Material>(shaders["plain"]);
 	materials["aphex"] = std::make_shared<Material>(shaders["textured"], textures["aphex"]);
 	materials["floor"] = std::make_shared<Material>(shaders["textured"], textures["floor"]);
 	materials["container"] = std::make_shared<Material>(shaders["textured"], textures["container"]);
+	materials["container"]->addTexture(textures["container_specular"]);
+}
+
+void Engine::createGrid()
+{
+	glGenVertexArrays(1, &gridVao);
+	glBindVertexArray(gridVao);
+	glBindVertexArray(0);
+
 }
 
 void Engine::createFloor()
 {
 	Entity floor = m_entityManager.createEntity("Floor");
 	floor.addComponent<MeshRenderer>(materials["floor"], meshes["plane"]);
-	floor.addComponent<Transform>(Vec3f(0.0f), 90.0f, Vec3f(1.0f,0.0f, 0.0f), Vec3f(50.0f));
+	floor.addComponent<Transform>(Vec3f(0.0f), 0.0f, Vec3f(1.0f,0.0f, 0.0f), Vec3f(50.0f));
 }
 
 void Engine::createSpotLight()
@@ -406,8 +468,15 @@ void Engine::createCube(const std::string& name, const char* materialName, Vec3f
 	cube.addComponent<Transform>(position, rotationAngle, rotationAxis, scale);
 }
 
+void Engine::loadModel(const char* path, const char* tag, Vec3f position, Vec3f scale, float angle, Vec3f rotAxis)
+{
+	Entity model = m_entityManager.createEntity(tag);
+	auto& transform = model.addComponent<Transform>(position);
+	transform.rotate(angle, rotAxis);
+	transform.setScale(scale);
+	model.addComponent<MeshRenderer>(materials["default"], path);
 
-
+}
 
 
 

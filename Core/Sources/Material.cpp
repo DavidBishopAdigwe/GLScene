@@ -5,14 +5,33 @@ void Material::use(const glm::mat4 &projection, const glm::mat4 &view, const glm
 	const glm::vec3 viewPosition)
 {
 	m_shader->use();
+
 	if (textureExists)
 	{
-		m_texture->bind();
-		m_shader->setUniformi("diffuseMap", 0);
-		m_shader->setUniformi("specularMap", 1);
-		m_shader->setUniformi("emissiveMap", 2);
-	}
+		int diffuseNr{};
+		int specularNr{};
+		for (int i = 0; i < m_textures.size(); ++i)
+		{
+			std::string uniformStr{};
+			auto& currentTex = m_textures[i];
+			switch (currentTex->type)
+			{
+			case Texture::Diffuse:
+				uniformStr = "diffuseMaps[" + std::to_string(diffuseNr) + "]";
+				++diffuseNr;
+				break;
 
+			case Texture::Specular:
+				uniformStr = "specularMaps[" + std::to_string(specularNr) + "]";
+				++specularNr;
+				break;
+			}
+			m_shader->setUniformi(uniformStr.c_str(), 0);
+			glActiveTexture(GL_TEXTURE0 + i);
+			currentTex->bind();
+		}
+		glActiveTexture(GL_TEXTURE0);
+	}
 	m_shader->setUniformf("ambientStrength", m_ambientStrength);
 	m_shader->setUniformf("diffuseStrength", m_diffuseStrength);
 	m_shader->setUniformf("specularStrength", m_specularStrength);
@@ -20,16 +39,20 @@ void Material::use(const glm::mat4 &projection, const glm::mat4 &view, const glm
 
 	m_shader->setUniformMat4("projection", projection);
 	m_shader->setUniformMat4("view", view);
+
 	m_shader->setUniformMat4("model", model);
 	m_shader->setUniformVec3("color", m_baseColor);
 	m_shader->setUniformVec3("viewPos", viewPosition);
+	
 }
 
-void Material::setTexture(const std::shared_ptr<Texture>& texture)
+void Material::addTexture(const std::shared_ptr<Texture>& texture)
 {
 	textureExists = true;
-	m_texture = texture;
+	m_textures.push_back(texture);
+	std::cout << "Added new texture to material: " << m_tag << "\n";
 }
+
 
 void Material::sendShaderInput(const std::string& name, float value)
 {

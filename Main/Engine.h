@@ -21,7 +21,6 @@
 #define PRINTAPI(x) std::cout << #x << std::endl;
 
 
-class Texture;
 class Shader;
 
 
@@ -56,6 +55,7 @@ private:
 
 public:
 
+	unsigned gridVao = 0;
 
 	std::map<std::string, std::shared_ptr<Shader>> shaders;
 	std::map<std::string, std::shared_ptr<Texture>> textures;
@@ -66,7 +66,7 @@ public:
 
 	double m_lastFrameTime{};
 	double m_deltaTime{};
-	Camera camera = Camera( glm::vec3(0.0f, 10.0f, -30.0f),glm::vec3(0.0f, 0.0f, 1.0f), 45.0f, (float)screen::width / screen::height, 10.0f);
+	Camera camera = Camera( glm::vec3(0.0f, 10.0f, -30.0f),glm::vec3(0.0f, 0.0f, 1.0f), 45.0f, (float)screen::width / screen::height, 15.0f, 0.1, 100);
 
 
 	void init(GLFWwindow*& window);
@@ -80,11 +80,14 @@ public:
 	void imguiUse();
 
 	static void imguiRender();
+	void renderGrid();
 
 	void createTextures();
 	void createShaders();
 	void createMeshes();			   
 	void createMaterials();
+
+	void createGrid();
 	void createFloor();
 	void createSpotLight();
 
@@ -95,7 +98,9 @@ public:
 	void createCube(const std::string &name = "Cube", const char *materialName = "default", Vec3f position = Vec3(0.0f), float
 	                rotationAngle = 0.0f,
 	                Vec3f rotationAxis = Vec3f(0.0f, 0.0f, 1.0f), Vec3f scale = Vec3f(1.0f));
-	
+	void loadModel(const char* path, const char* tag, Vec3f position = Vec3f(0.0), Vec3f scale = Vec3f(1.0), float angle = 0, Vec3f
+	               rotAxis = Vec3f(0.0, 0.0, 1.0));
+
 	static void keyCallback(GLFWwindow* window, int key, int action, int scancode, int mods);
 	static void frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 	static void mouseCallback(GLFWwindow* window, double xPos, double yPos);

@@ -11,13 +11,16 @@ public:
 	Material(const std::shared_ptr<Shader>& shader) : m_shader(shader)
 	{
 	}
-	Material(const std::shared_ptr<Shader>& shader, const std::shared_ptr<Texture>& texture) : m_shader(shader), m_texture(texture)
+	Material(const std::shared_ptr<Shader>& shader, const std::shared_ptr<Texture>& texture) : m_shader(shader)
 	{
 		textureExists = true;
+		m_textures.push_back(texture);
 	}
-	void use(const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, glm::vec3 viewPosition);
-	void setTexture(const std::shared_ptr<Texture>& texture);
 
+	std::string m_tag{};
+	void use(const glm::mat4& projection, const glm::mat4& view, const glm::mat4& model, glm::vec3 viewPosition);
+	void addTexture(const std::shared_ptr<Texture>& texture);
+	
 	void sendShaderInput(const std::string &name, float value);
 	void sendShaderInput(const std::string &name, int value);
 	void sendShaderInput(const std::string &name, Vec3f value);
@@ -35,6 +38,8 @@ public:
 	float getAmbience() const;
 	Vec3f getColor() const;
 
+
+
 private:
 	Vec3f m_baseColor{1.0f};
 	float m_ambientStrength{1.0f};
@@ -43,8 +48,10 @@ private:
 	float m_shininess{ 32.0f };
 	bool textureExists{};
 
+public:
+
 	std::shared_ptr<Shader> m_shader{};
-	std::shared_ptr<Texture> m_texture{};
+	std::vector<std::shared_ptr<Texture>> m_textures{};
 
 
 };

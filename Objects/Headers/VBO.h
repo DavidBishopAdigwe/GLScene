@@ -6,12 +6,11 @@ class VBO
 {
 
 public:
-	GLuint ID;
+	GLuint ID{};
 
+	VBO() = default;
 	~VBO();
 	 VBO(GLsizei size, const void* data, GLenum usage = GL_STATIC_DRAW);
-	void operator==(const VBO&) = delete;
-	VBO(const VBO&) = delete;
 
 	void bind();
 	void unbind();

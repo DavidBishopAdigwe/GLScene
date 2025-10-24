@@ -2,6 +2,8 @@
 
 #include <GLFW/glfw3native.h>
 
+#include "Core/FileManager.h"
+
 
 Shader::Shader(const char* vertexFile, const char* fragmentFile)
 {
@@ -37,7 +39,7 @@ Shader::Shader(const char* vertexFile, const char* fragmentFile)
 
 std::string Shader::getShaderSource(const char* fileName)
 {
-	std::ifstream stream(fileName);
+	std::ifstream stream(FileManager::getPath(fileName));
 	stream.open(fileName);
 	if (!stream.is_open())
 	{
@@ -84,6 +86,7 @@ void Shader::use() const
 
 Shader::~Shader()
 {
+	std::cout << "Deleting shader program: " << ID << std::endl;
 	glDeleteProgram(ID);
 }
 

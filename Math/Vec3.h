@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 
+#include "Math.h"
 #include "Vec2.h"
 
 
@@ -51,7 +52,9 @@ public:
 
     bool operator==(const Vec3& rhs)
     {
-        return (x == rhs.x && y == rhs.y && z == rhs.z);
+        return Math::equals<T>(x, rhs.x) &&
+        	   Math::equals<T>(y, rhs.y) &&
+               Math::equals<T>(z, rhs.z);
     }
 
     bool operator!=(const Vec3& rhs)
@@ -73,16 +76,20 @@ public:
     // Modifies the current object-
     const Vec3& normalize()
     {
+        if (*this != zero())
+        {
             float magnitude = getMagnitude();
             x /= magnitude;
             y /= magnitude;
             z /= magnitude;
+        }
         return *this;
     }
 
     // Returns normalized variant of the current object
     Vec3 getNormalized()
     {
+        if (*this == zero()) return zero();
         float magnitude = (getMagnitude());
         return Vec3(x/magnitude, y/magnitude, z/magnitude);
     }
@@ -100,7 +107,7 @@ public:
 
     static Vec3 zero()
     {
-        return Vec3(0);
+        return Vec3();
     }
 };
 

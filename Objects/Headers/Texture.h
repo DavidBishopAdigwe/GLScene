@@ -1,42 +1,40 @@
 #pragma once
+#include <string>
+#include <vector>
 #include <glad/glad.h>
-#include <stb/stb_image.h>
 
+class Shader;
 
 class Texture
 {
 public:
-	Texture(const char* fileName, GLenum wrapType, GLenum imageFormat, bool flipImageOnLoad = true, GLuint desiredFormat = GL_RGBA);
-	Texture(const char* diffuseMapFilename, const char* specularMapFilename, GLenum wrapType, GLenum diffuseImageFormat, GLenum specularImageFormat, bool flipImgOnLoad = true);
-	void setSpecularMap(const char* fileName)
+	constexpr static unsigned MAX_UNITS{ 32 };
+
+	GLuint ID{};
+	std::string m_path{};
+	enum Type
 	{
-		glGenTextures(1, &specularID);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularID);
+		Diffuse,
+		Specular
+	};
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	Type type{Diffuse};
+	Texture() = default;
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	Texture(GLuint id, std::string path, Type texType) : ID(id), m_path(std::move(path)), type(texType){}
 
 
+	Texture(const char* fileName, Type texType = Type::Diffuse, bool flipOnLoad = true, GLenum wrapType = GL_REPEAT, GLuint desiredFormat = GL_RGBA);
+	static unsigned int loadTextureFile(const char* filePath, Type texType = Type::Diffuse, bool flipOnLoad = true, GLenum wrapType = GL_REPEAT, GLuint desiredFormat = GL_RGBA);
 
-	}
-	GLuint diffuseID{};
-	GLuint specularID{};
-	GLuint emissiveID{};
-	GLenum glIndexUnit;
-	bool hasSpecularMap{};
-	bool hasEmissiveMap{};
-	void setSpecularMap(const char* fileName, GLuint imageFormat, GLuint wrapType = GL_REPEAT, bool flipImgOnLoad = true);
-	void setEmissiveMap(const char* fileName, GLuint imageFormat, GLuint wrapType = GL_REPEAT, bool flipImgOnLoad = true);
-	void setWrap(GLenum wrapAxis, GLenum wrapType);
-	void setImageData(const char* fileName, GLint mipmapLevel, GLint desiredFormat, GLenum imageFormat, bool flipImageOnLoad);
+	static GLuint loadTextureFile(const char* relativePath, const std::string& directory, Type texType = Type::Diffuse, bool flipOnLoad = true, GLenum wrapType = GL_REPEAT, GLuint desiredFormat = GL_RGBA);
 	void bind();
-	void unbind();
+	static void unbind(GLenum activeTexUnit);
 
 	~Texture();
+
+private:
+
+	static void setWrap(GLenum wrapAxis, GLenum wrapType);
 
 };

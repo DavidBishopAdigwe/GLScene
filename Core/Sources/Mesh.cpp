@@ -1,58 +1,48 @@
 #include "Core/Headers/Mesh.h"
 
+#include <iostream>
 
-Mesh::Mesh()
+
+Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<unsigned int> &indices)
 {
+	m_vertices = vertices;
+	m_indices = indices;
+
+	setupMesh();
 }
 
-Mesh::Mesh(std::vector<GLfloat> vertices, std::vector<GLuint> indices): m_indexCount(indices.size())
+
+void Mesh::setupMesh()
 {
-	vao = new VAO();
-	vbo = new VBO(static_cast<GLsizei>(vertices.size()), std::data(vertices));
-	ebo = new EBO(static_cast<GLsizei>(indices.size()),  std::data(indices));
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
 
-	vao->bind();
-	vbo->bind();
-	ebo->bind();
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-	vao->linkAttrib(*vbo, 0, 3, 5, 0);
-	vao->linkAttrib(*vbo, 1, 2, 5, 3);
+	if (!m_vertices.empty()) glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * m_vertices.size(), m_vertices.data(), GL_STATIC_DRAW);
+	if (!m_indices.empty()) glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned) * m_indices.size(), m_indices.data(), GL_STATIC_DRAW);
 
-	vao->unbind();
-	vbo->unbind();
-	ebo->unbind();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, m_Position)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, m_Normal)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, m_TexCoords)));
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0);
+
 }
 
-Mesh::Mesh(const GLfloat* vertices, const GLuint* indices, int indexCount, GLsizei sizeOfVertices, GLsizei sizeOfIndices) : m_indexCount(indexCount)
-{
-	vao = new VAO();
-	vbo = new VBO(sizeOfVertices, vertices);
-	ebo = new EBO(sizeOfIndices,  indices);
-
-	vao->bind();
-	vbo->bind();
-	ebo->bind();
-
-	vao->linkAttrib(*vbo, 0, 3, 8, 0);
-	vao->linkAttrib(*vbo, 1, 3, 8, 3);
-	vao->linkAttrib(*vbo, 2, 2, 8, 6);
-
-
-	vao->unbind();
-	vbo->unbind();
-	ebo->unbind();
-}
-
+// Call after material setup
 void Mesh::draw() const
 {
-	vao->bind();
-
-	glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
-Mesh::~Mesh()
-{
-	delete vao;
-	delete vbo;
-	delete ebo;
-}
+

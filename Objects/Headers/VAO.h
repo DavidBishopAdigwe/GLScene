@@ -9,13 +9,15 @@ class VAO
 public:
 	GLuint ID{};
 
-	 VAO();
+	 VAO()= default;
 	~VAO();
-	void operator==(const VAO&) = delete;
-	VAO(const VAO&) = delete;
 
+	void init();
 	void linkAttrib(VBO& vbo,GLuint location, GLsizei size, GLint stride, GLint offset);
-	void bind();
-	void unbind();
+
+	void bind() const;
+
+	void unbind() const;
+
 
 };

@@ -41,7 +41,7 @@ float Transform::getRotationAngle() const
 void Transform::rotate(float angle, Vec3f rotationAxis)
 {
     m_currentAngle = angle;
-    m_currentRotationAxis = rotationAxis;
+    m_currentRotationAxis = rotationAxis.getNormalized();
 }
 
 void DirectionalLight::setDirection(Vec3f dir)

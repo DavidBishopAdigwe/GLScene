@@ -36,7 +36,7 @@ FetchContent_MakeAvailable(imgui)
 FetchContent_Declare(
         assimp
         GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG v5.3.1
+        GIT_TAG v6.0.1
 )
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Don't build assimp tools" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Don't build tests" FORCE)
@@ -69,6 +69,7 @@ set(SOURCES
         Core/Sources/Mesh.cpp
         Core/Sources/Entity.cpp
         Core/Sources/Components.cpp
+        Core/Headers/Components.h
         ${GLAD_DIR}/glad.c  # Local glad.c
 )
 
@@ -79,9 +80,10 @@ set(IMGUI_SOURCES
         ${imgui_SOURCE_DIR}/imgui_widgets.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+        Objects/General/Vertex.h
 )
 
-add_executable(GLScene ${SOURCES} ${IMGUI_SOURCES})
+add_executable(GLScene ${SOURCES} ${IMGUI_SOURCES} "Core/FileManager.h" "Core/ResourceManager.h" "Core/Parser.h" "Shapes/Headers/Grid.h" "Math/Math.h")
 
 target_include_directories(GLScene PRIVATE
         ${PROJECT_SOURCE_DIR}
@@ -103,6 +105,10 @@ target_link_libraries(GLScene PRIVATE
         assimp
         ${OPENGL_LIBRARIES}
 )
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "/DEBUG")
+endif()
 
 if(WIN32)
     target_link_libraries(GLScene PRIVATE opengl32)

@@ -1,75 +1,59 @@
-#pragma once
-#include <GL/gl.h>
+#include <vector>
+#include <Objects/General/Vertex.h>
 
-namespace Cube
-{
-
-    constexpr static int indexCount{ 36 };
-
-    constexpr static GLfloat vertices[192]
-    {
-        // Front face
-    -0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Top-left
-     0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // Top-right
-    -0.5f, -0.5f,  0.5f,   0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // Bottom-left
-     0.5f, -0.5f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Bottom-right
-
-     // Back face
-       0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,  0.0f, 1.0f,  // Top-left 
-      -0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,   1.0f, 1.0f,  // Top-right
-       0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,   0.0f, 0.0f,  // Bottom-left
-      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,   1.0f, 0.0f,  // Bottom-right
-
-      // Left face
-       -0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
-       -0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,  // Top-right
-       -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  // Bottom-left
-       -0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,  // Bottom-right
-
-       // Right face
-         0.5f,  0.5f,  0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
-         0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f,   1.0f, 1.0f,  // Top-right
-         0.5f, -0.5f,  0.5f, 1.0f, 0.0f, 0.0f,   0.0f, 0.0f,  // Bottom-left
-         0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,   1.0f, 0.0f,  // Bottom-right
-
-         // Top face
-          -0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // Top-left
-           0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f,  // Top-right
-          -0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f,  // Bottom-left
-           0.5f,  0.5f,  0.5f, 0.0f, 1.0f, 0.0f,   1.0f, 0.0f,  // Bottom-right
-
-           // Bottom face
-           -0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,   0.0f, 1.0f,  // Top-left
-            0.5f, -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,   1.0f, 1.0f,  // Top-right
-           -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   0.0f, 0.0f,  // Bottom-left
-            0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   1.0f, 0.0f   // Bottom-right
+namespace Cube {
+    inline std::vector<Vertex> vertices = {
+        // positions          // normals           // texture coords
+        // front
+        Vertex(-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f),
+        Vertex( 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f),
+        Vertex( 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f),
+        Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f),
+        // back
+        Vertex(-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f),
+        Vertex( 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f),
+        Vertex( 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f),
+        Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f),
+        // left
+        Vertex(-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f),
+        Vertex(-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f),
+        Vertex(-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f),
+        Vertex(-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f),
+        // right
+        Vertex( 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f),
+        Vertex( 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f),
+        Vertex( 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f),
+        Vertex( 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f),
+        // top
+        Vertex(-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f),
+        Vertex( 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f),
+        Vertex( 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f),
+        Vertex(-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f),
+        // bottom
+        Vertex(-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f),
+        Vertex( 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f),
+        Vertex( 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f),
+        Vertex(-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f)
     };
 
-    constexpr static GLuint indices[36]
-    {
-        // Front face
-         0, 1, 2,
-         1, 3, 2,
-
-         // Back face
-         4, 5, 6,
-         5, 7, 6,
-
-         // Left face
-         8, 9, 10,
-         9, 11, 10,
-
-         // Right face
-         12, 13, 14,
-         13, 15, 14,
-
-         // Top face
-         16, 17, 18,
-         17, 19, 18,
-
-         // Bottom face
-         20, 21, 22,
-         21, 23, 22
+    inline std::vector<unsigned int> indices = {
+        // front
+        0, 1, 2,
+        2, 3, 0,
+        // back
+        4, 5, 6,
+        6, 7, 4,
+        // left
+        8, 9, 10,
+        10, 11, 8,
+        // right
+        12, 13, 14,
+        14, 15, 12,
+        // top
+        16, 17, 18,
+        18, 19, 16,
+        // bottom
+        20, 21, 22,
+        22, 23, 20
     };
-
 }
